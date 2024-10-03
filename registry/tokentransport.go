@@ -26,7 +26,8 @@ func (t *TokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 type authToken struct {
-	Token string `json:"token"`
+	Token       string `json:"token"`
+	AccessToken string `json:"access_token"`
 }
 
 func (t *TokenTransport) authAndRetry(authService *authService, req *http.Request) (*http.Response, error) {
@@ -64,6 +65,11 @@ func (t *TokenTransport) auth(authService *authService) (string, *http.Response,
 	err = decoder.Decode(&authToken)
 	if err != nil {
 		return "", nil, err
+	}
+
+	// Canonicalize it to Token by taking precedence of AccessToken
+	if authToken.AccessToken != "" {
+		authToken.Token = authToken.AccessToken
 	}
 
 	return authToken.Token, nil, nil
